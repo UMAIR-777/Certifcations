@@ -1,9 +1,5 @@
 
-Certainly! Below is a basic README file for your TensorFlow model:
-
-markdown
-Copy code
-# Convolutional Neural Network (CNN) for Image Classification
+# Convolutional Neural Network (CNN) for Brain tumor Image Classification
 
 ## Overview
 
