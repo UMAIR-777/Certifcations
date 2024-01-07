@@ -1,0 +1,1425 @@
+
+from google.colab import drive 
+drive.mount('/content/gdrive')
+     
+Drive already mounted at /content/gdrive; to attempt to forcibly remount, call drive.mount("/content/gdrive", force_remount=True).
+
+%cd /content/gdrive/My Drive/Multiple
+!ls
+     
+/content/gdrive/My Drive/Multiple
+1-conv-128-nodes-0-dense-1585577447-model-0.8418451547622681-accuracy.h5
+1-conv-128-nodes-1-dense-1585583570-model-0.8533772826194763-accuracy.h5
+1-conv-128-nodes-2-dense-1585591101-model-0.24711696803569794-accuracy.h5
+1-conv-32-nodes-0-dense-1585575165-model-0.8583195805549622-accuracy.h5
+1-conv-32-nodes-1-dense-1585581033-model-0.24711696803569794-accuracy.h5
+1-conv-32-nodes-2-dense-1585587765-model-0.24711696803569794-accuracy.h5
+1-conv-64-nodes-0-dense-1585576055-model-0.8550246953964233-accuracy.h5
+1-conv-64-nodes-1-dense-1585582167-model-0.265238881111145-accuracy.h5
+1-conv-64-nodes-2-dense-1585588770-model-0.24711696803569794-accuracy.h5
+2-conv-128-nodes-0-dense-1585577752-model-0.8220757842063904-accuracy.h5
+2-conv-128-nodes-1-dense-1585584237-model-0.8550246953964233-accuracy.h5
+2-conv-128-nodes-2-dense-1585591608-model-0.8517298102378845-accuracy.h5
+2-conv-32-nodes-0-dense-1585575380-model-0.8533772826194763-accuracy.h5
+2-conv-32-nodes-1-dense-1585581167-model-0.8896210789680481-accuracy.h5
+2-conv-32-nodes-2-dense-1585587879-model-0.24711696803569794-accuracy.h5
+2-conv-64-nodes-0-dense-1585576260-model-0.8945634365081787-accuracy.h5
+2-conv-64-nodes-1-dense-1585582393-model-0.8896210789680481-accuracy.h5
+2-conv-64-nodes-2-dense-1585589271-model-0.8369027972221375-accuracy.h5
+3-conv-128-nodes-0-dense-1585578860-model-0.859967052936554-accuracy.h5
+3-conv-128-nodes-1-dense-1585585506-model-0.9093904495239258-accuracy.h5
+3-conv-128-nodes-2-dense-1585593044-model-0.8550246953964233-accuracy.h5
+3-conv-32-nodes-0-dense-1585575599-model-0.9011532068252563-accuracy.h5
+3-conv-32-nodes-1-dense-1585581578-model-0.8616145253181458-accuracy.h5
+3-conv-32-nodes-2-dense-1585588198-model-0.6392092108726501-accuracy.h5
+3-conv-64-nodes-0-dense-1585576792-model-0.8945634365081787-accuracy.h5
+3-conv-64-nodes-1-dense-1585582861-model-0.8896210789680481-accuracy.h5
+3-conv-64-nodes-2-dense-1585590085-model-0.8583195805549622-accuracy.h5
+logs
+X_test.pickle
+X_train.pickle
+Y_test.pickle
+Y_train.pickle
+
+%tensorflow_version 1.x
+     
+TensorFlow 1.x selected.
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.callbacks import TensorBoard, EarlyStopping
+import pickle
+import time
+import numpy as np
+import keras.optimizers
+from sklearn.metrics import classification_report
+     
+Using TensorFlow backend.
+
+import tensorflow
+print(tensorflow.__version__)
+     
+1.15.2
+
+tensorboard = TensorBoard(log_dir='./logs', histogram_freq=0,
+                          write_graph=True, write_images=False)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
+
+     
+
+import pickle
+
+pickle_in = open("X_test.pickle","rb")
+X_test = pickle.load(pickle_in)
+
+pickle_in = open("X_train.pickle","rb")
+X_train = pickle.load(pickle_in)
+
+pickle_in = open("Y_test.pickle","rb")
+Y_test = pickle.load(pickle_in)
+
+pickle_in = open("Y_train.pickle","rb")
+Y_train = pickle.load(pickle_in)
+     
+
+print(X_train.shape)
+print(X_test.shape)
+     
+(1006, 150, 150, 3)
+(607, 150, 150, 3)
+
+dense_layers = [0,1,2]
+layer_sizes = [32, 64, 128]
+conv_layers = [1, 2, 3]
+
+for dense_layer in dense_layers:
+    for layer_size in layer_sizes:
+        for conv_layer in conv_layers:
+            NAME = "{}-conv-{}-nodes-{}-dense-{}".format(conv_layer, layer_size, dense_layer, int(time.time()))
+            print(NAME)
+     
+1-conv-32-nodes-0-dense-1585575148
+2-conv-32-nodes-0-dense-1585575148
+3-conv-32-nodes-0-dense-1585575148
+1-conv-64-nodes-0-dense-1585575148
+2-conv-64-nodes-0-dense-1585575148
+3-conv-64-nodes-0-dense-1585575148
+1-conv-128-nodes-0-dense-1585575148
+2-conv-128-nodes-0-dense-1585575148
+3-conv-128-nodes-0-dense-1585575148
+1-conv-32-nodes-1-dense-1585575148
+2-conv-32-nodes-1-dense-1585575148
+3-conv-32-nodes-1-dense-1585575148
+1-conv-64-nodes-1-dense-1585575148
+2-conv-64-nodes-1-dense-1585575148
+3-conv-64-nodes-1-dense-1585575148
+1-conv-128-nodes-1-dense-1585575148
+2-conv-128-nodes-1-dense-1585575148
+3-conv-128-nodes-1-dense-1585575148
+1-conv-32-nodes-2-dense-1585575148
+2-conv-32-nodes-2-dense-1585575148
+3-conv-32-nodes-2-dense-1585575148
+1-conv-64-nodes-2-dense-1585575148
+2-conv-64-nodes-2-dense-1585575148
+3-conv-64-nodes-2-dense-1585575148
+1-conv-128-nodes-2-dense-1585575148
+2-conv-128-nodes-2-dense-1585575148
+3-conv-128-nodes-2-dense-1585575148
+
+dense_layers = [0,1, 2]
+layer_sizes = [32, 64, 128]
+conv_layers = [1, 2, 3]
+
+
+for dense_layer in dense_layers:
+    for layer_size in layer_sizes:
+        for conv_layer in conv_layers:
+            NAME = "{}-conv-{}-nodes-{}-dense-{}".format(conv_layer, layer_size, dense_layer, int(time.time()))
+            print(NAME)
+            model = Sequential()
+
+            model.add(Conv2D(layer_size, (3, 3), input_shape=X_train.shape[1:]))
+            model.add(Activation('relu'))
+            model.add(MaxPooling2D(pool_size=(2, 2)))
+
+            for l in range(conv_layer-1): 
+                model.add(Conv2D(layer_size, (3, 3)))
+                model.add(Activation('relu'))
+                model.add(MaxPooling2D(pool_size=(2, 2)))
+
+            model.add(Flatten())
+            for _ in range(dense_layer):
+                model.add(Dense(layer_size))
+                model.add(Activation('relu'))
+                model.add(Dropout(0.33))
+
+            model.add(Dense(4))
+            model.add(Activation('softmax'))
+
+
+            model.compile(loss='sparse_categorical_crossentropy',
+              optimizer= "adam",
+              metrics=['accuracy'],
+              )
+            
+            #Fit the model
+            model.fit(X_train, Y_train,
+            batch_size=32,
+            epochs=20,
+            validation_data=(X_test,Y_test),
+            callbacks=[tensorboard,es])
+                    
+            #Score 
+            scores = model.evaluate(X_test, Y_test, verbose=1) 
+            print('Test loss:', scores[0])
+            print('Test accuracy:', scores[1])
+            
+            #Save model
+            model.save("{}-model-{}-accuracy.h5".format(NAME,scores[1]))
+            
+            #precision    recall  f1-score   support
+            y_pred = model.predict(X_test, batch_size=64, verbose=1)
+            y_pred_bool = np.argmax(y_pred, axis=1)
+            print(classification_report(Y_test, y_pred_bool))
+            print()
+            print()  
+     
+1-conv-32-nodes-0-dense-1585575165
+WARNING:tensorflow:From /tensorflow-1.15.2/python3.6/tensorflow_core/python/ops/resource_variable_ops.py:1630: calling BaseResourceVariable.__init__ (from tensorflow.python.ops.resource_variable_ops) with constraint is deprecated and will be removed in a future version.
+Instructions for updating:
+If using Keras pass *_constraint arguments to layers.
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 184.4736 - acc: 0.4274 - val_loss: 10.4015 - val_acc: 0.6194
+Epoch 2/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 3.1891 - acc: 0.7883 - val_loss: 2.4125 - val_acc: 0.8007
+Epoch 3/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.4053 - acc: 0.9473 - val_loss: 1.9376 - val_acc: 0.8550
+Epoch 4/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.2105 - acc: 0.9821 - val_loss: 1.8951 - val_acc: 0.8567
+Epoch 5/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.0358 - acc: 0.9950 - val_loss: 1.7588 - val_acc: 0.8550
+Epoch 6/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.0119 - acc: 0.9990 - val_loss: 1.7261 - val_acc: 0.8567
+Epoch 7/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.0032 - acc: 0.9990 - val_loss: 1.7125 - val_acc: 0.8583
+Epoch 8/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.0018 - acc: 1.0000 - val_loss: 1.6945 - val_acc: 0.8600
+Epoch 9/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 0.0012 - acc: 1.0000 - val_loss: 1.6876 - val_acc: 0.8616
+Epoch 10/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 9.3083e-04 - acc: 1.0000 - val_loss: 1.6971 - val_acc: 0.8583
+Epoch 11/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 6.7350e-04 - acc: 1.0000 - val_loss: 1.7102 - val_acc: 0.8616
+Epoch 12/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 4.9355e-04 - acc: 1.0000 - val_loss: 1.7345 - val_acc: 0.8600
+Epoch 13/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 3.7726e-04 - acc: 1.0000 - val_loss: 1.7493 - val_acc: 0.8583
+Epoch 14/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 2.6752e-04 - acc: 1.0000 - val_loss: 1.7718 - val_acc: 0.8583
+Epoch 00014: early stopping
+607/607 [==============================] - 3s 5ms/sample - loss: 1.7718 - acc: 0.8583
+Test loss: 1.77183079837378
+Test accuracy: 0.8583196
+607/607 [==============================] - 3s 5ms/sample
+              precision    recall  f1-score   support
+
+           0       0.92      0.99      0.95       150
+           1       0.76      0.88      0.82       150
+           2       0.89      0.74      0.81       157
+           3       0.88      0.83      0.86       150
+
+    accuracy                           0.86       607
+   macro avg       0.86      0.86      0.86       607
+weighted avg       0.86      0.86      0.86       607
+
+
+
+2-conv-32-nodes-0-dense-1585575380
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 48.6685 - acc: 0.4503 - val_loss: 0.9882 - val_acc: 0.6161
+Epoch 2/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.5886 - acc: 0.7942 - val_loss: 0.5899 - val_acc: 0.8089
+Epoch 3/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.2443 - acc: 0.9185 - val_loss: 0.5263 - val_acc: 0.8402
+Epoch 4/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0993 - acc: 0.9801 - val_loss: 0.5920 - val_acc: 0.8501
+Epoch 5/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0339 - acc: 0.9930 - val_loss: 0.7299 - val_acc: 0.8336
+Epoch 6/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0190 - acc: 0.9960 - val_loss: 0.7901 - val_acc: 0.8451
+Epoch 7/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0106 - acc: 0.9990 - val_loss: 0.7071 - val_acc: 0.8550
+Epoch 8/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0069 - acc: 1.0000 - val_loss: 0.7670 - val_acc: 0.8534
+Epoch 00008: early stopping
+607/607 [==============================] - 4s 7ms/sample - loss: 0.7670 - acc: 0.8534
+Test loss: 0.7669789349227604
+Test accuracy: 0.8533773
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.83      0.99      0.90       150
+           1       0.78      0.89      0.83       150
+           2       0.95      0.68      0.79       157
+           3       0.90      0.87      0.88       150
+
+    accuracy                           0.85       607
+   macro avg       0.86      0.86      0.85       607
+weighted avg       0.86      0.85      0.85       607
+
+
+
+3-conv-32-nodes-0-dense-1585575599
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 11.1916 - acc: 0.4036 - val_loss: 1.0902 - val_acc: 0.5519
+Epoch 2/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.9101 - acc: 0.6243 - val_loss: 0.8244 - val_acc: 0.6886
+Epoch 3/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.5939 - acc: 0.7813 - val_loss: 0.5981 - val_acc: 0.7776
+Epoch 4/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.3851 - acc: 0.8648 - val_loss: 0.5120 - val_acc: 0.8221
+Epoch 5/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.2341 - acc: 0.9314 - val_loss: 0.6538 - val_acc: 0.8188
+Epoch 6/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.1886 - acc: 0.9404 - val_loss: 0.4853 - val_acc: 0.8583
+Epoch 7/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.1296 - acc: 0.9612 - val_loss: 0.5142 - val_acc: 0.8583
+Epoch 8/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.0729 - acc: 0.9841 - val_loss: 0.4761 - val_acc: 0.8830
+Epoch 9/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.0483 - acc: 0.9911 - val_loss: 0.5326 - val_acc: 0.8781
+Epoch 10/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.0261 - acc: 0.9970 - val_loss: 0.4294 - val_acc: 0.8962
+Epoch 11/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.0474 - acc: 0.9861 - val_loss: 0.4536 - val_acc: 0.9012
+Epoch 12/20
+1006/1006 [==============================] - 30s 30ms/sample - loss: 0.0184 - acc: 0.9980 - val_loss: 0.4582 - val_acc: 0.9012
+Epoch 13/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.0065 - acc: 1.0000 - val_loss: 0.4847 - val_acc: 0.8929
+Epoch 14/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.0055 - acc: 1.0000 - val_loss: 0.4819 - val_acc: 0.9110
+Epoch 15/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 0.0032 - acc: 1.0000 - val_loss: 0.4836 - val_acc: 0.9012
+Epoch 00015: early stopping
+607/607 [==============================] - 5s 7ms/sample - loss: 0.4836 - acc: 0.9012
+Test loss: 0.4836260726463657
+Test accuracy: 0.9011532
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.90      1.00      0.95       150
+           1       0.81      0.93      0.86       150
+           2       0.98      0.86      0.92       157
+           3       0.94      0.82      0.88       150
+
+    accuracy                           0.90       607
+   macro avg       0.91      0.90      0.90       607
+weighted avg       0.91      0.90      0.90       607
+
+
+
+1-conv-64-nodes-0-dense-1585576055
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 23s 23ms/sample - loss: 373.6371 - acc: 0.4364 - val_loss: 19.1173 - val_acc: 0.6030
+Epoch 2/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 3.7157 - acc: 0.8250 - val_loss: 2.9297 - val_acc: 0.8303
+Epoch 3/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.4063 - acc: 0.9483 - val_loss: 2.5180 - val_acc: 0.8435
+Epoch 4/20
+1006/1006 [==============================] - 22s 21ms/sample - loss: 0.0588 - acc: 0.9861 - val_loss: 2.3671 - val_acc: 0.8567
+Epoch 5/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.0122 - acc: 0.9980 - val_loss: 2.3792 - val_acc: 0.8534
+Epoch 6/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.0053 - acc: 1.0000 - val_loss: 2.3933 - val_acc: 0.8550
+Epoch 7/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.0038 - acc: 1.0000 - val_loss: 2.3878 - val_acc: 0.8517
+Epoch 8/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.0026 - acc: 1.0000 - val_loss: 2.3860 - val_acc: 0.8501
+Epoch 9/20
+1006/1006 [==============================] - 22s 22ms/sample - loss: 0.0018 - acc: 1.0000 - val_loss: 2.3906 - val_acc: 0.8550
+Epoch 00009: early stopping
+607/607 [==============================] - 4s 7ms/sample - loss: 2.3906 - acc: 0.8550
+Test loss: 2.3906413063382397
+Test accuracy: 0.8550247
+607/607 [==============================] - 4s 6ms/sample
+              precision    recall  f1-score   support
+
+           0       0.85      0.99      0.91       150
+           1       0.81      0.89      0.85       150
+           2       0.88      0.75      0.81       157
+           3       0.90      0.80      0.85       150
+
+    accuracy                           0.86       607
+   macro avg       0.86      0.86      0.85       607
+weighted avg       0.86      0.86      0.85       607
+
+
+
+2-conv-64-nodes-0-dense-1585576260
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 58s 57ms/sample - loss: 20.2730 - acc: 0.5010 - val_loss: 0.6912 - val_acc: 0.7512
+Epoch 2/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.4846 - acc: 0.8241 - val_loss: 0.7162 - val_acc: 0.7677
+Epoch 3/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.1898 - acc: 0.9374 - val_loss: 0.4691 - val_acc: 0.8567
+Epoch 4/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.0852 - acc: 0.9761 - val_loss: 0.4035 - val_acc: 0.8781
+Epoch 5/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.0280 - acc: 0.9940 - val_loss: 0.5467 - val_acc: 0.8781
+Epoch 6/20
+1006/1006 [==============================] - 58s 57ms/sample - loss: 0.0113 - acc: 0.9980 - val_loss: 0.5368 - val_acc: 0.8764
+Epoch 7/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.0050 - acc: 0.9990 - val_loss: 0.5162 - val_acc: 0.9044
+Epoch 8/20
+1006/1006 [==============================] - 58s 57ms/sample - loss: 0.0026 - acc: 1.0000 - val_loss: 0.5248 - val_acc: 0.8929
+Epoch 9/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 9.2987e-04 - acc: 1.0000 - val_loss: 0.5531 - val_acc: 0.8946
+Epoch 00009: early stopping
+607/607 [==============================] - 8s 14ms/sample - loss: 0.5531 - acc: 0.8946
+Test loss: 0.5531126718348294
+Test accuracy: 0.89456344
+607/607 [==============================] - 8s 13ms/sample
+              precision    recall  f1-score   support
+
+           0       0.90      1.00      0.95       150
+           1       0.82      0.95      0.88       150
+           2       0.98      0.78      0.87       157
+           3       0.90      0.86      0.88       150
+
+    accuracy                           0.89       607
+   macro avg       0.90      0.90      0.89       607
+weighted avg       0.90      0.89      0.89       607
+
+
+
+3-conv-64-nodes-0-dense-1585576792
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 64s 64ms/sample - loss: 8.4837 - acc: 0.4682 - val_loss: 0.8818 - val_acc: 0.6211
+Epoch 2/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.7305 - acc: 0.7127 - val_loss: 0.6787 - val_acc: 0.7216
+Epoch 3/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.4574 - acc: 0.8370 - val_loss: 0.6453 - val_acc: 0.7661
+Epoch 4/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.2795 - acc: 0.9076 - val_loss: 0.4760 - val_acc: 0.8451
+Epoch 5/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.1727 - acc: 0.9443 - val_loss: 0.4401 - val_acc: 0.8682
+Epoch 6/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.1036 - acc: 0.9702 - val_loss: 0.5120 - val_acc: 0.8748
+Epoch 7/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.0834 - acc: 0.9732 - val_loss: 0.6013 - val_acc: 0.8468
+Epoch 8/20
+1006/1006 [==============================] - 64s 64ms/sample - loss: 0.0666 - acc: 0.9781 - val_loss: 0.5232 - val_acc: 0.8748
+Epoch 9/20
+1006/1006 [==============================] - 64s 64ms/sample - loss: 0.0298 - acc: 0.9930 - val_loss: 0.5385 - val_acc: 0.8797
+Epoch 10/20
+1006/1006 [==============================] - 64s 64ms/sample - loss: 0.0207 - acc: 0.9970 - val_loss: 0.5574 - val_acc: 0.8946
+Epoch 00010: early stopping
+607/607 [==============================] - 9s 15ms/sample - loss: 0.5574 - acc: 0.8946
+Test loss: 0.5573579117140228
+Test accuracy: 0.89456344
+607/607 [==============================] - 9s 15ms/sample
+              precision    recall  f1-score   support
+
+           0       0.90      0.97      0.93       150
+           1       0.83      0.93      0.87       150
+           2       0.97      0.78      0.86       157
+           3       0.91      0.91      0.91       150
+
+    accuracy                           0.89       607
+   macro avg       0.90      0.90      0.89       607
+weighted avg       0.90      0.89      0.89       607
+
+
+
+1-conv-128-nodes-0-dense-1585577447
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 38s 37ms/sample - loss: 494.7555 - acc: 0.4622 - val_loss: 8.6571 - val_acc: 0.6689
+Epoch 2/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 2.3708 - acc: 0.8310 - val_loss: 1.4624 - val_acc: 0.8204
+Epoch 3/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.2389 - acc: 0.9483 - val_loss: 1.3550 - val_acc: 0.8270
+Epoch 4/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.0524 - acc: 0.9911 - val_loss: 1.5666 - val_acc: 0.8287
+Epoch 5/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.0219 - acc: 0.9960 - val_loss: 1.5914 - val_acc: 0.8237
+Epoch 6/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.0317 - acc: 0.9960 - val_loss: 1.6303 - val_acc: 0.8303
+Epoch 7/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.1832 - acc: 0.9851 - val_loss: 1.4798 - val_acc: 0.8336
+Epoch 8/20
+1006/1006 [==============================] - 36s 36ms/sample - loss: 0.0311 - acc: 0.9930 - val_loss: 1.3643 - val_acc: 0.8418
+Epoch 00008: early stopping
+607/607 [==============================] - 6s 10ms/sample - loss: 1.3643 - acc: 0.8418
+Test loss: 1.3642780833817785
+Test accuracy: 0.84184515
+607/607 [==============================] - 6s 9ms/sample
+              precision    recall  f1-score   support
+
+           0       0.83      0.99      0.90       150
+           1       0.81      0.89      0.84       150
+           2       0.89      0.69      0.78       157
+           3       0.86      0.80      0.83       150
+
+    accuracy                           0.84       607
+   macro avg       0.85      0.84      0.84       607
+weighted avg       0.85      0.84      0.84       607
+
+
+
+2-conv-128-nodes-0-dense-1585577752
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 37.1186 - acc: 0.5278 - val_loss: 0.7636 - val_acc: 0.6919
+Epoch 2/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.5134 - acc: 0.8201 - val_loss: 0.6060 - val_acc: 0.7842
+Epoch 3/20
+1006/1006 [==============================] - 151s 151ms/sample - loss: 0.2100 - acc: 0.9294 - val_loss: 0.6283 - val_acc: 0.8237
+Epoch 4/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.0856 - acc: 0.9672 - val_loss: 0.6947 - val_acc: 0.8336
+Epoch 5/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.0453 - acc: 0.9851 - val_loss: 1.0487 - val_acc: 0.8336
+Epoch 6/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.0313 - acc: 0.9871 - val_loss: 0.8626 - val_acc: 0.8386
+Epoch 7/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.0191 - acc: 0.9940 - val_loss: 1.0165 - val_acc: 0.8221
+Epoch 00007: early stopping
+607/607 [==============================] - 21s 35ms/sample - loss: 1.0165 - acc: 0.8221
+Test loss: 1.0164982151160327
+Test accuracy: 0.8220758
+607/607 [==============================] - 21s 34ms/sample
+              precision    recall  f1-score   support
+
+           0       0.80      0.99      0.88       150
+           1       0.75      0.91      0.82       150
+           2       0.93      0.67      0.78       157
+           3       0.87      0.73      0.79       150
+
+    accuracy                           0.82       607
+   macro avg       0.84      0.82      0.82       607
+weighted avg       0.84      0.82      0.82       607
+
+
+
+3-conv-128-nodes-0-dense-1585578860
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 13.3171 - acc: 0.4433 - val_loss: 0.9308 - val_acc: 0.6310
+Epoch 2/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.7684 - acc: 0.6988 - val_loss: 0.7870 - val_acc: 0.7100
+Epoch 3/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.5815 - acc: 0.7724 - val_loss: 0.6942 - val_acc: 0.7842
+Epoch 4/20
+1006/1006 [==============================] - 178s 177ms/sample - loss: 0.3681 - acc: 0.8648 - val_loss: 0.6683 - val_acc: 0.8237
+Epoch 5/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.2110 - acc: 0.9354 - val_loss: 0.6732 - val_acc: 0.8451
+Epoch 6/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.1444 - acc: 0.9503 - val_loss: 0.7714 - val_acc: 0.8435
+Epoch 7/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.1162 - acc: 0.9602 - val_loss: 0.5967 - val_acc: 0.8633
+Epoch 8/20
+1006/1006 [==============================] - 176s 175ms/sample - loss: 0.1092 - acc: 0.9692 - val_loss: 0.7743 - val_acc: 0.8353
+Epoch 9/20
+1006/1006 [==============================] - 176s 175ms/sample - loss: 0.0461 - acc: 0.9881 - val_loss: 0.8049 - val_acc: 0.8731
+Epoch 10/20
+1006/1006 [==============================] - 176s 175ms/sample - loss: 0.0461 - acc: 0.9881 - val_loss: 0.8126 - val_acc: 0.8715
+Epoch 11/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.0243 - acc: 0.9930 - val_loss: 0.9348 - val_acc: 0.8731
+Epoch 12/20
+1006/1006 [==============================] - 177s 176ms/sample - loss: 0.0132 - acc: 0.9970 - val_loss: 0.9593 - val_acc: 0.8600
+Epoch 00012: early stopping
+607/607 [==============================] - 25s 41ms/sample - loss: 0.9593 - acc: 0.8600
+Test loss: 0.9592550945831877
+Test accuracy: 0.85996705
+607/607 [==============================] - 24s 40ms/sample
+              precision    recall  f1-score   support
+
+           0       0.86      0.98      0.92       150
+           1       0.74      0.85      0.79       150
+           2       0.97      0.77      0.86       157
+           3       0.92      0.84      0.88       150
+
+    accuracy                           0.86       607
+   macro avg       0.87      0.86      0.86       607
+weighted avg       0.87      0.86      0.86       607
+
+
+
+1-conv-32-nodes-1-dense-1585581033
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 261.9685 - acc: 0.2833 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 2/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3812 - acc: 0.2584 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 3/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3822 - acc: 0.2575 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 4/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3808 - acc: 0.2584 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 5/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3822 - acc: 0.2575 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 6/20
+1006/1006 [==============================] - 16s 15ms/sample - loss: 1.3821 - acc: 0.2575 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 7/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3822 - acc: 0.2575 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 8/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 1.3850 - acc: 0.2555 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 00008: early stopping
+607/607 [==============================] - 3s 5ms/sample - loss: 1.3864 - acc: 0.2471
+Test loss: 1.386399419735841
+Test accuracy: 0.24711697
+607/607 [==============================] - 3s 5ms/sample
+              precision    recall  f1-score   support
+
+           0       0.25      1.00      0.40       150
+           1       0.00      0.00      0.00       150
+           2       0.00      0.00      0.00       157
+           3       0.00      0.00      0.00       150
+
+    accuracy                           0.25       607
+   macro avg       0.06      0.25      0.10       607
+weighted avg       0.06      0.25      0.10       607
+
+
+
+2-conv-32-nodes-1-dense-1585581167
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 28s 27ms/sample - loss: 20.4203 - acc: 0.3479 - val_loss: 0.8807 - val_acc: 0.6425
+Epoch 2/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 0.8609 - acc: 0.6640 - val_loss: 0.5597 - val_acc: 0.8138
+Epoch 3/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 0.5055 - acc: 0.8191 - val_loss: 0.4718 - val_acc: 0.8534
+Epoch 4/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.3542 - acc: 0.8807 - val_loss: 0.3783 - val_acc: 0.8682
+Epoch 5/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.2610 - acc: 0.9036 - val_loss: 0.4373 - val_acc: 0.8583
+Epoch 6/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.1955 - acc: 0.9274 - val_loss: 0.3091 - val_acc: 0.8979
+Epoch 7/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 0.1452 - acc: 0.9463 - val_loss: 3.1832 - val_acc: 0.6837
+Epoch 8/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.5062 - acc: 0.8598 - val_loss: 0.4022 - val_acc: 0.8715
+Epoch 9/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 0.2409 - acc: 0.9135 - val_loss: 0.4005 - val_acc: 0.8946
+Epoch 10/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.1929 - acc: 0.9235 - val_loss: 0.2995 - val_acc: 0.9143
+Epoch 11/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 0.1551 - acc: 0.9394 - val_loss: 0.4290 - val_acc: 0.8979
+Epoch 12/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.1381 - acc: 0.9423 - val_loss: 0.6938 - val_acc: 0.8583
+Epoch 13/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.1264 - acc: 0.9513 - val_loss: 0.5969 - val_acc: 0.8731
+Epoch 14/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.0978 - acc: 0.9612 - val_loss: 0.5663 - val_acc: 0.8880
+Epoch 15/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 0.1022 - acc: 0.9493 - val_loss: 0.5929 - val_acc: 0.8896
+Epoch 00015: early stopping
+607/607 [==============================] - 4s 7ms/sample - loss: 0.5929 - acc: 0.8896
+Test loss: 0.5929325835708731
+Test accuracy: 0.8896211
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.87      1.00      0.93       150
+           1       0.86      0.87      0.86       150
+           2       0.95      0.78      0.86       157
+           3       0.89      0.91      0.90       150
+
+    accuracy                           0.89       607
+   macro avg       0.89      0.89      0.89       607
+weighted avg       0.89      0.89      0.89       607
+
+
+
+3-conv-32-nodes-1-dense-1585581578
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 30s 29ms/sample - loss: 7.8056 - acc: 0.3042 - val_loss: 1.1938 - val_acc: 0.4728
+Epoch 2/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 1.2606 - acc: 0.3797 - val_loss: 1.1571 - val_acc: 0.5091
+Epoch 3/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 1.1857 - acc: 0.4751 - val_loss: 1.0342 - val_acc: 0.6491
+Epoch 4/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 1.0778 - acc: 0.5258 - val_loss: 0.9704 - val_acc: 0.6442
+Epoch 5/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.9748 - acc: 0.5775 - val_loss: 0.9316 - val_acc: 0.6738
+Epoch 6/20
+1006/1006 [==============================] - 29s 28ms/sample - loss: 0.9180 - acc: 0.6014 - val_loss: 0.8209 - val_acc: 0.7166
+Epoch 7/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.8634 - acc: 0.6034 - val_loss: 0.8041 - val_acc: 0.7381
+Epoch 8/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.8074 - acc: 0.6173 - val_loss: 0.8119 - val_acc: 0.7232
+Epoch 9/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.8003 - acc: 0.6431 - val_loss: 0.7438 - val_acc: 0.7545
+Epoch 10/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.7458 - acc: 0.6759 - val_loss: 0.7342 - val_acc: 0.7364
+Epoch 11/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.7405 - acc: 0.6551 - val_loss: 0.6588 - val_acc: 0.7990
+Epoch 12/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.6806 - acc: 0.6720 - val_loss: 0.6353 - val_acc: 0.8188
+Epoch 13/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.6312 - acc: 0.7127 - val_loss: 0.7105 - val_acc: 0.8155
+Epoch 14/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.6373 - acc: 0.7068 - val_loss: 0.6316 - val_acc: 0.8336
+Epoch 15/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.6008 - acc: 0.7157 - val_loss: 0.6252 - val_acc: 0.8105
+Epoch 16/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.6316 - acc: 0.6948 - val_loss: 0.6619 - val_acc: 0.8122
+Epoch 17/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.5992 - acc: 0.7147 - val_loss: 0.6444 - val_acc: 0.8369
+Epoch 18/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.5765 - acc: 0.7266 - val_loss: 0.6526 - val_acc: 0.8188
+Epoch 19/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.5436 - acc: 0.7475 - val_loss: 0.6816 - val_acc: 0.8402
+Epoch 20/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 0.5705 - acc: 0.7376 - val_loss: 0.5851 - val_acc: 0.8616
+607/607 [==============================] - 4s 7ms/sample - loss: 0.5851 - acc: 0.8616
+Test loss: 0.5850528343112701
+Test accuracy: 0.8616145
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.91      0.95      0.93       150
+           1       0.96      0.79      0.87       150
+           2       0.89      0.80      0.84       157
+           3       0.73      0.91      0.81       150
+
+    accuracy                           0.86       607
+   macro avg       0.87      0.86      0.86       607
+weighted avg       0.87      0.86      0.86       607
+
+
+
+1-conv-64-nodes-1-dense-1585582167
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 467.8595 - acc: 0.2853 - val_loss: 1.5013 - val_acc: 0.2768
+Epoch 2/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.4396 - acc: 0.2654 - val_loss: 1.3866 - val_acc: 0.2784
+Epoch 3/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3641 - acc: 0.2654 - val_loss: 1.3513 - val_acc: 0.2801
+Epoch 4/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 1.3673 - acc: 0.2654 - val_loss: 1.4230 - val_acc: 0.3114
+Epoch 5/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 1.3681 - acc: 0.2624 - val_loss: 1.3623 - val_acc: 0.2652
+Epoch 6/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 1.3697 - acc: 0.2684 - val_loss: 1.3621 - val_acc: 0.2652
+Epoch 7/20
+1006/1006 [==============================] - 27s 26ms/sample - loss: 1.3683 - acc: 0.2674 - val_loss: 1.3621 - val_acc: 0.2652
+Epoch 8/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3766 - acc: 0.2614 - val_loss: 1.3622 - val_acc: 0.2652
+Epoch 00008: early stopping
+607/607 [==============================] - 4s 6ms/sample - loss: 1.3622 - acc: 0.2652
+Test loss: 1.3621741411517048
+Test accuracy: 0.26523888
+607/607 [==============================] - 4s 6ms/sample
+              precision    recall  f1-score   support
+
+           0       0.25      1.00      0.40       150
+           1       0.00      0.00      0.00       150
+           2       1.00      0.01      0.03       157
+           3       1.00      0.06      0.11       150
+
+    accuracy                           0.27       607
+   macro avg       0.56      0.27      0.14       607
+weighted avg       0.57      0.27      0.13       607
+
+
+
+2-conv-64-nodes-1-dense-1585582393
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 36.2217 - acc: 0.4702 - val_loss: 0.6999 - val_acc: 0.6985
+Epoch 2/20
+1006/1006 [==============================] - 56s 55ms/sample - loss: 0.5790 - acc: 0.7952 - val_loss: 0.4845 - val_acc: 0.8402
+Epoch 3/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.2699 - acc: 0.9066 - val_loss: 0.4174 - val_acc: 0.8418
+Epoch 4/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.1930 - acc: 0.9384 - val_loss: 0.4216 - val_acc: 0.8814
+Epoch 5/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.0941 - acc: 0.9702 - val_loss: 0.4394 - val_acc: 0.8962
+Epoch 6/20
+1006/1006 [==============================] - 56s 55ms/sample - loss: 0.0752 - acc: 0.9702 - val_loss: 0.5135 - val_acc: 0.8633
+Epoch 7/20
+1006/1006 [==============================] - 56s 55ms/sample - loss: 0.0625 - acc: 0.9811 - val_loss: 0.5902 - val_acc: 0.8583
+Epoch 8/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.0892 - acc: 0.9742 - val_loss: 0.4288 - val_acc: 0.8896
+Epoch 00008: early stopping
+607/607 [==============================] - 8s 13ms/sample - loss: 0.4288 - acc: 0.8896
+Test loss: 0.42875374944441796
+Test accuracy: 0.8896211
+607/607 [==============================] - 8s 13ms/sample
+              precision    recall  f1-score   support
+
+           0       0.85      1.00      0.92       150
+           1       0.89      0.87      0.88       150
+           2       0.94      0.86      0.90       157
+           3       0.89      0.83      0.86       150
+
+    accuracy                           0.89       607
+   macro avg       0.89      0.89      0.89       607
+weighted avg       0.89      0.89      0.89       607
+
+
+
+3-conv-64-nodes-1-dense-1585582861
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 64s 63ms/sample - loss: 11.4193 - acc: 0.4185 - val_loss: 1.1262 - val_acc: 0.5255
+Epoch 2/20
+1006/1006 [==============================] - 63s 62ms/sample - loss: 1.0685 - acc: 0.5328 - val_loss: 0.8646 - val_acc: 0.6936
+Epoch 3/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.8315 - acc: 0.6501 - val_loss: 0.7373 - val_acc: 0.7002
+Epoch 4/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.6234 - acc: 0.7475 - val_loss: 0.5762 - val_acc: 0.8155
+Epoch 5/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.5049 - acc: 0.7952 - val_loss: 0.4780 - val_acc: 0.8567
+Epoch 6/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 0.3952 - acc: 0.8479 - val_loss: 0.4753 - val_acc: 0.8484
+Epoch 7/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.3497 - acc: 0.8608 - val_loss: 0.4787 - val_acc: 0.8336
+Epoch 8/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2938 - acc: 0.8917 - val_loss: 0.5065 - val_acc: 0.8666
+Epoch 9/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2700 - acc: 0.9016 - val_loss: 0.5484 - val_acc: 0.8484
+Epoch 10/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2866 - acc: 0.8847 - val_loss: 0.5354 - val_acc: 0.8830
+Epoch 11/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.3009 - acc: 0.8738 - val_loss: 0.5491 - val_acc: 0.8896
+Epoch 00011: early stopping
+607/607 [==============================] - 9s 14ms/sample - loss: 0.5491 - acc: 0.8896
+Test loss: 0.5491362939752896
+Test accuracy: 0.8896211
+607/607 [==============================] - 9s 14ms/sample
+              precision    recall  f1-score   support
+
+           0       0.86      0.99      0.92       150
+           1       0.91      0.83      0.87       150
+           2       0.96      0.83      0.89       157
+           3       0.85      0.91      0.88       150
+
+    accuracy                           0.89       607
+   macro avg       0.89      0.89      0.89       607
+weighted avg       0.89      0.89      0.89       607
+
+
+
+1-conv-128-nodes-1-dense-1585583570
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 61s 60ms/sample - loss: 1274.0170 - acc: 0.3579 - val_loss: 5.2857 - val_acc: 0.6145
+Epoch 2/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 2.6296 - acc: 0.7117 - val_loss: 1.0068 - val_acc: 0.7348
+Epoch 3/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.6853 - acc: 0.7853 - val_loss: 0.7179 - val_acc: 0.7842
+Epoch 4/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.3991 - acc: 0.8390 - val_loss: 0.7115 - val_acc: 0.8237
+Epoch 5/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.2945 - acc: 0.8767 - val_loss: 0.6446 - val_acc: 0.8336
+Epoch 6/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.2525 - acc: 0.8996 - val_loss: 0.6358 - val_acc: 0.8468
+Epoch 7/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.2339 - acc: 0.9284 - val_loss: 0.7830 - val_acc: 0.8386
+Epoch 8/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.2320 - acc: 0.9185 - val_loss: 0.6497 - val_acc: 0.8517
+Epoch 9/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.1796 - acc: 0.9314 - val_loss: 0.9808 - val_acc: 0.8336
+Epoch 10/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.1628 - acc: 0.9453 - val_loss: 0.9762 - val_acc: 0.8254
+Epoch 11/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 0.1833 - acc: 0.9483 - val_loss: 0.7305 - val_acc: 0.8534
+Epoch 00011: early stopping
+607/607 [==============================] - 7s 12ms/sample - loss: 0.7305 - acc: 0.8534
+Test loss: 0.7304941876323455
+Test accuracy: 0.8533773
+607/607 [==============================] - 7s 12ms/sample
+              precision    recall  f1-score   support
+
+           0       0.84      0.98      0.91       150
+           1       0.81      0.88      0.84       150
+           2       0.92      0.73      0.81       157
+           3       0.86      0.83      0.84       150
+
+    accuracy                           0.85       607
+   macro avg       0.86      0.85      0.85       607
+weighted avg       0.86      0.85      0.85       607
+
+
+
+2-conv-128-nodes-1-dense-1585584237
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 156s 155ms/sample - loss: 78.8360 - acc: 0.5159 - val_loss: 0.7613 - val_acc: 0.7265
+Epoch 2/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.6311 - acc: 0.7913 - val_loss: 0.6272 - val_acc: 0.7990
+Epoch 3/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.3175 - acc: 0.8877 - val_loss: 0.6002 - val_acc: 0.8237
+Epoch 4/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.1492 - acc: 0.9493 - val_loss: 0.6136 - val_acc: 0.8418
+Epoch 5/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.1381 - acc: 0.9622 - val_loss: 0.8238 - val_acc: 0.8072
+Epoch 6/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.1689 - acc: 0.9632 - val_loss: 0.8751 - val_acc: 0.8237
+Epoch 7/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.1297 - acc: 0.9592 - val_loss: 0.8021 - val_acc: 0.8517
+Epoch 8/20
+1006/1006 [==============================] - 152s 151ms/sample - loss: 0.0682 - acc: 0.9801 - val_loss: 0.7774 - val_acc: 0.8550
+Epoch 00008: early stopping
+607/607 [==============================] - 21s 35ms/sample - loss: 0.7774 - acc: 0.8550
+Test loss: 0.7773821442288268
+Test accuracy: 0.8550247
+607/607 [==============================] - 22s 37ms/sample
+              precision    recall  f1-score   support
+
+           0       0.80      0.99      0.88       150
+           1       0.84      0.89      0.86       150
+           2       0.95      0.78      0.85       157
+           3       0.86      0.77      0.81       150
+
+    accuracy                           0.86       607
+   macro avg       0.86      0.86      0.85       607
+weighted avg       0.86      0.86      0.85       607
+
+
+
+3-conv-128-nodes-1-dense-1585585506
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 16.5858 - acc: 0.4712 - val_loss: 0.9002 - val_acc: 0.5931
+Epoch 2/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.7629 - acc: 0.6789 - val_loss: 0.6458 - val_acc: 0.7496
+Epoch 3/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.5981 - acc: 0.7734 - val_loss: 0.5191 - val_acc: 0.8418
+Epoch 4/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.3860 - acc: 0.8797 - val_loss: 0.5331 - val_acc: 0.8254
+Epoch 5/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.2955 - acc: 0.8877 - val_loss: 0.3941 - val_acc: 0.8830
+Epoch 6/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.1890 - acc: 0.9354 - val_loss: 0.4091 - val_acc: 0.8764
+Epoch 7/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.1525 - acc: 0.9533 - val_loss: 0.5014 - val_acc: 0.8666
+Epoch 8/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.1334 - acc: 0.9513 - val_loss: 0.3566 - val_acc: 0.8863
+Epoch 9/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.1113 - acc: 0.9652 - val_loss: 0.5696 - val_acc: 0.8880
+Epoch 10/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.1596 - acc: 0.9533 - val_loss: 0.5402 - val_acc: 0.8781
+Epoch 11/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.1215 - acc: 0.9642 - val_loss: 0.5906 - val_acc: 0.8764
+Epoch 12/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.0825 - acc: 0.9682 - val_loss: 0.4661 - val_acc: 0.8896
+Epoch 13/20
+1006/1006 [==============================] - 169s 168ms/sample - loss: 0.0773 - acc: 0.9742 - val_loss: 0.4314 - val_acc: 0.9094
+Epoch 00013: early stopping
+607/607 [==============================] - 24s 40ms/sample - loss: 0.4314 - acc: 0.9094
+Test loss: 0.43140105704302845
+Test accuracy: 0.90939045
+607/607 [==============================] - 25s 40ms/sample
+              precision    recall  f1-score   support
+
+           0       0.89      1.00      0.94       150
+           1       0.93      0.87      0.90       150
+           2       0.97      0.88      0.92       157
+           3       0.86      0.89      0.87       150
+
+    accuracy                           0.91       607
+   macro avg       0.91      0.91      0.91       607
+weighted avg       0.91      0.91      0.91       607
+
+
+
+1-conv-32-nodes-2-dense-1585587765
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 16s 16ms/sample - loss: 152.8089 - acc: 0.2555 - val_loss: 1.3862 - val_acc: 0.2586
+Epoch 2/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3865 - acc: 0.2475 - val_loss: 1.3862 - val_acc: 0.2586
+Epoch 3/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3863 - acc: 0.2704 - val_loss: 1.3862 - val_acc: 0.2586
+Epoch 4/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3865 - acc: 0.2455 - val_loss: 1.3862 - val_acc: 0.2586
+Epoch 5/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3865 - acc: 0.2306 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 6/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3864 - acc: 0.2505 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 7/20
+1006/1006 [==============================] - 15s 15ms/sample - loss: 1.3863 - acc: 0.2535 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 00007: early stopping
+607/607 [==============================] - 3s 4ms/sample - loss: 1.3863 - acc: 0.2471
+Test loss: 1.386324644481527
+Test accuracy: 0.24711697
+607/607 [==============================] - 3s 4ms/sample
+              precision    recall  f1-score   support
+
+           0       0.25      1.00      0.40       150
+           1       0.00      0.00      0.00       150
+           2       0.00      0.00      0.00       157
+           3       0.00      0.00      0.00       150
+
+    accuracy                           0.25       607
+   macro avg       0.06      0.25      0.10       607
+weighted avg       0.06      0.25      0.10       607
+
+
+
+2-conv-32-nodes-2-dense-1585587879
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 19.9142 - acc: 0.2674 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 2/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3969 - acc: 0.2485 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 3/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3867 - acc: 0.2435 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 4/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2455 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 5/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2376 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 6/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2555 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 7/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2396 - val_loss: 1.3863 - val_acc: 0.2586
+Epoch 8/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3863 - acc: 0.2515 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 9/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3864 - acc: 0.2356 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 10/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3865 - acc: 0.2376 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 11/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3863 - acc: 0.2505 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 12/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3863 - acc: 0.2545 - val_loss: 1.3863 - val_acc: 0.2471
+Epoch 00012: early stopping
+607/607 [==============================] - 4s 7ms/sample - loss: 1.3863 - acc: 0.2471
+Test loss: 1.3863202105636847
+Test accuracy: 0.24711697
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.25      1.00      0.40       150
+           1       0.00      0.00      0.00       150
+           2       0.00      0.00      0.00       157
+           3       0.00      0.00      0.00       150
+
+    accuracy                           0.25       607
+   macro avg       0.06      0.25      0.10       607
+weighted avg       0.06      0.25      0.10       607
+
+
+
+3-conv-32-nodes-2-dense-1585588198
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 29s 29ms/sample - loss: 4.7409 - acc: 0.2853 - val_loss: 1.3714 - val_acc: 0.3278
+Epoch 2/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3715 - acc: 0.2654 - val_loss: 1.2793 - val_acc: 0.4135
+Epoch 3/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3566 - acc: 0.2922 - val_loss: 1.2802 - val_acc: 0.3970
+Epoch 4/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3354 - acc: 0.3241 - val_loss: 1.2201 - val_acc: 0.4020
+Epoch 5/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3360 - acc: 0.3320 - val_loss: 1.2136 - val_acc: 0.4300
+Epoch 6/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3184 - acc: 0.3370 - val_loss: 1.2092 - val_acc: 0.4399
+Epoch 7/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.3000 - acc: 0.3638 - val_loss: 1.2310 - val_acc: 0.4646
+Epoch 8/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.2930 - acc: 0.3668 - val_loss: 1.1354 - val_acc: 0.4646
+Epoch 9/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.2473 - acc: 0.3917 - val_loss: 1.1550 - val_acc: 0.5124
+Epoch 10/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.2416 - acc: 0.3976 - val_loss: 1.1535 - val_acc: 0.5470
+Epoch 11/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.2445 - acc: 0.3936 - val_loss: 1.0913 - val_acc: 0.5437
+Epoch 12/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.1964 - acc: 0.4274 - val_loss: 1.0819 - val_acc: 0.5387
+Epoch 13/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.1858 - acc: 0.4423 - val_loss: 1.0619 - val_acc: 0.5585
+Epoch 14/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.1709 - acc: 0.4374 - val_loss: 1.0299 - val_acc: 0.5832
+Epoch 15/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.1293 - acc: 0.4592 - val_loss: 1.0048 - val_acc: 0.5914
+Epoch 16/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.1014 - acc: 0.4702 - val_loss: 0.9785 - val_acc: 0.5832
+Epoch 17/20
+1006/1006 [==============================] - 28s 27ms/sample - loss: 1.0751 - acc: 0.4940 - val_loss: 0.9568 - val_acc: 0.6063
+Epoch 18/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.0425 - acc: 0.5149 - val_loss: 1.0003 - val_acc: 0.5321
+Epoch 19/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.0450 - acc: 0.5109 - val_loss: 0.8573 - val_acc: 0.6359
+Epoch 20/20
+1006/1006 [==============================] - 28s 28ms/sample - loss: 1.0063 - acc: 0.5278 - val_loss: 0.8452 - val_acc: 0.6392
+607/607 [==============================] - 4s 7ms/sample - loss: 0.8452 - acc: 0.6392
+Test loss: 0.845246462983001
+Test accuracy: 0.6392092
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.89      0.92      0.90       150
+           1       0.85      0.70      0.77       150
+           2       0.44      0.92      0.60       157
+           3       0.50      0.01      0.01       150
+
+    accuracy                           0.64       607
+   macro avg       0.67      0.64      0.57       607
+weighted avg       0.67      0.64      0.57       607
+
+
+
+1-conv-64-nodes-2-dense-1585588770
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 27s 27ms/sample - loss: 267.5966 - acc: 0.2624 - val_loss: 1.4131 - val_acc: 0.2471
+Epoch 2/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3985 - acc: 0.2485 - val_loss: 1.3866 - val_acc: 0.2471
+Epoch 3/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2535 - val_loss: 1.3865 - val_acc: 0.2471
+Epoch 4/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2485 - val_loss: 1.3865 - val_acc: 0.2471
+Epoch 5/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3864 - acc: 0.2515 - val_loss: 1.3865 - val_acc: 0.2471
+Epoch 6/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2485 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 7/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3863 - acc: 0.2545 - val_loss: 1.3865 - val_acc: 0.2471
+Epoch 8/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3863 - acc: 0.2644 - val_loss: 1.3865 - val_acc: 0.2471
+Epoch 9/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3866 - acc: 0.2207 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 10/20
+1006/1006 [==============================] - 26s 26ms/sample - loss: 1.3864 - acc: 0.2505 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 11/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3864 - acc: 0.2525 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 12/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 13/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 14/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3863 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 15/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 16/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3864 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 17/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3862 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 18/20
+1006/1006 [==============================] - 25s 25ms/sample - loss: 1.3865 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 19/20
+1006/1006 [==============================] - 26s 25ms/sample - loss: 1.3864 - acc: 0.2545 - val_loss: 1.3864 - val_acc: 0.2471
+Epoch 00019: early stopping
+607/607 [==============================] - 4s 6ms/sample - loss: 1.3864 - acc: 0.2471
+Test loss: 1.386388364890851
+Test accuracy: 0.24711697
+607/607 [==============================] - 4s 7ms/sample
+              precision    recall  f1-score   support
+
+           0       0.25      1.00      0.40       150
+           1       0.00      0.00      0.00       150
+           2       0.00      0.00      0.00       157
+           3       0.00      0.00      0.00       150
+
+    accuracy                           0.25       607
+   macro avg       0.06      0.25      0.10       607
+weighted avg       0.06      0.25      0.10       607
+
+
+
+2-conv-64-nodes-2-dense-1585589271
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 58s 58ms/sample - loss: 20.8886 - acc: 0.3459 - val_loss: 1.1244 - val_acc: 0.5750
+Epoch 2/20
+1006/1006 [==============================] - 57s 56ms/sample - loss: 1.1250 - acc: 0.5408 - val_loss: 0.9695 - val_acc: 0.6458
+Epoch 3/20
+1006/1006 [==============================] - 57s 56ms/sample - loss: 0.8865 - acc: 0.6640 - val_loss: 0.6106 - val_acc: 0.8138
+Epoch 4/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.6110 - acc: 0.7763 - val_loss: 0.5723 - val_acc: 0.8171
+Epoch 5/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.4718 - acc: 0.8300 - val_loss: 0.5131 - val_acc: 0.8517
+Epoch 6/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.4294 - acc: 0.8489 - val_loss: 0.5635 - val_acc: 0.8435
+Epoch 7/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.4816 - acc: 0.8509 - val_loss: 0.5349 - val_acc: 0.7941
+Epoch 8/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.4060 - acc: 0.8419 - val_loss: 0.5185 - val_acc: 0.8369
+Epoch 9/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.3093 - acc: 0.8946 - val_loss: 0.4764 - val_acc: 0.8567
+Epoch 10/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.2647 - acc: 0.9085 - val_loss: 0.6154 - val_acc: 0.8188
+Epoch 11/20
+1006/1006 [==============================] - 56s 56ms/sample - loss: 0.2591 - acc: 0.9225 - val_loss: 0.8281 - val_acc: 0.8023
+Epoch 12/20
+1006/1006 [==============================] - 57s 56ms/sample - loss: 0.2192 - acc: 0.9314 - val_loss: 0.6190 - val_acc: 0.8369
+Epoch 13/20
+1006/1006 [==============================] - 57s 57ms/sample - loss: 0.1540 - acc: 0.9473 - val_loss: 0.7133 - val_acc: 0.8534
+Epoch 14/20
+1006/1006 [==============================] - 57s 56ms/sample - loss: 0.1539 - acc: 0.9473 - val_loss: 0.7015 - val_acc: 0.8369
+Epoch 00014: early stopping
+607/607 [==============================] - 8s 13ms/sample - loss: 0.7015 - acc: 0.8369
+Test loss: 0.7015230804927267
+Test accuracy: 0.8369028
+607/607 [==============================] - 8s 13ms/sample
+              precision    recall  f1-score   support
+
+           0       0.78      1.00      0.87       150
+           1       0.82      0.87      0.84       150
+           2       0.97      0.69      0.81       157
+           3       0.83      0.79      0.81       150
+
+    accuracy                           0.84       607
+   macro avg       0.85      0.84      0.83       607
+weighted avg       0.85      0.84      0.83       607
+
+
+
+3-conv-64-nodes-2-dense-1585590085
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 6.7936 - acc: 0.3678 - val_loss: 1.1525 - val_acc: 0.5404
+Epoch 2/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 1.1445 - acc: 0.5070 - val_loss: 0.9002 - val_acc: 0.6227
+Epoch 3/20
+1006/1006 [==============================] - 62s 61ms/sample - loss: 1.0277 - acc: 0.5706 - val_loss: 0.8230 - val_acc: 0.6886
+Epoch 4/20
+1006/1006 [==============================] - 62s 61ms/sample - loss: 0.8722 - acc: 0.6282 - val_loss: 0.9291 - val_acc: 0.6326
+Epoch 5/20
+1006/1006 [==============================] - 62s 61ms/sample - loss: 0.7842 - acc: 0.6839 - val_loss: 0.7768 - val_acc: 0.7331
+Epoch 6/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.6286 - acc: 0.7604 - val_loss: 0.6269 - val_acc: 0.7858
+Epoch 7/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.5575 - acc: 0.7853 - val_loss: 0.6071 - val_acc: 0.8105
+Epoch 8/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.4210 - acc: 0.8449 - val_loss: 0.6226 - val_acc: 0.8435
+Epoch 9/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.4426 - acc: 0.8410 - val_loss: 0.5656 - val_acc: 0.8468
+Epoch 10/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.3627 - acc: 0.8658 - val_loss: 0.6527 - val_acc: 0.8089
+Epoch 11/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.3660 - acc: 0.8728 - val_loss: 0.4653 - val_acc: 0.8863
+Epoch 12/20
+1006/1006 [==============================] - 62s 61ms/sample - loss: 0.2494 - acc: 0.9066 - val_loss: 0.5604 - val_acc: 0.8715
+Epoch 13/20
+1006/1006 [==============================] - 62s 61ms/sample - loss: 0.2638 - acc: 0.8976 - val_loss: 0.6434 - val_acc: 0.8699
+Epoch 14/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2652 - acc: 0.9095 - val_loss: 0.5464 - val_acc: 0.8666
+Epoch 15/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2368 - acc: 0.9145 - val_loss: 0.5614 - val_acc: 0.8847
+Epoch 16/20
+1006/1006 [==============================] - 62s 62ms/sample - loss: 0.2108 - acc: 0.9205 - val_loss: 0.5579 - val_acc: 0.8583
+Epoch 00016: early stopping
+607/607 [==============================] - 9s 14ms/sample - loss: 0.5579 - acc: 0.8583
+Test loss: 0.5578615520106509
+Test accuracy: 0.8583196
+607/607 [==============================] - 9s 15ms/sample
+              precision    recall  f1-score   support
+
+           0       0.81      1.00      0.89       150
+           1       0.81      0.93      0.86       150
+           2       0.98      0.68      0.80       157
+           3       0.89      0.83      0.86       150
+
+    accuracy                           0.86       607
+   macro avg       0.87      0.86      0.86       607
+weighted avg       0.87      0.86      0.86       607
+
+
+
+1-conv-128-nodes-2-dense-1585591101
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 63s 63ms/sample - loss: 345.2695 - acc: 0.2932 - val_loss: 1.5849 - val_acc: 0.1680
+Epoch 2/20
+1006/1006 [==============================] - 59s 59ms/sample - loss: 1.7541 - acc: 0.2634 - val_loss: 1.3820 - val_acc: 0.2273
+Epoch 3/20
+1006/1006 [==============================] - 59s 59ms/sample - loss: 1.5692 - acc: 0.2664 - val_loss: 1.3587 - val_acc: 0.2768
+Epoch 4/20
+1006/1006 [==============================] - 59s 59ms/sample - loss: 1.5405 - acc: 0.2863 - val_loss: 1.3593 - val_acc: 0.2784
+Epoch 5/20
+1006/1006 [==============================] - 60s 60ms/sample - loss: 1.4089 - acc: 0.2624 - val_loss: 1.3965 - val_acc: 0.2405
+Epoch 6/20
+1006/1006 [==============================] - 60s 59ms/sample - loss: 1.5582 - acc: 0.2495 - val_loss: 1.3833 - val_acc: 0.2504
+Epoch 7/20
+1006/1006 [==============================] - 60s 59ms/sample - loss: 1.3945 - acc: 0.2485 - val_loss: 1.3870 - val_acc: 0.2471
+Epoch 8/20
+1006/1006 [==============================] - 59s 59ms/sample - loss: 1.3866 - acc: 0.2485 - val_loss: 1.3867 - val_acc: 0.2471
+Epoch 00008: early stopping
+607/607 [==============================] - 7s 12ms/sample - loss: 1.3867 - acc: 0.2471
+Test loss: 1.3867425726115998
+Test accuracy: 0.24711697
+607/607 [==============================] - 7s 12ms/sample
+              precision    recall  f1-score   support
+
+           0       0.00      0.00      0.00       150
+           1       0.25      1.00      0.40       150
+           2       0.00      0.00      0.00       157
+           3       0.00      0.00      0.00       150
+
+    accuracy                           0.25       607
+   macro avg       0.06      0.25      0.10       607
+weighted avg       0.06      0.25      0.10       607
+
+
+
+2-conv-128-nodes-2-dense-1585591608
+/usr/local/lib/python3.6/dist-packages/sklearn/metrics/_classification.py:1272: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 158s 157ms/sample - loss: 15.5621 - acc: 0.4692 - val_loss: 0.8391 - val_acc: 0.6969
+Epoch 2/20
+1006/1006 [==============================] - 154s 153ms/sample - loss: 0.7403 - acc: 0.7316 - val_loss: 0.7979 - val_acc: 0.7199
+Epoch 3/20
+1006/1006 [==============================] - 154s 153ms/sample - loss: 0.6260 - acc: 0.8072 - val_loss: 0.5363 - val_acc: 0.8056
+Epoch 4/20
+1006/1006 [==============================] - 154s 153ms/sample - loss: 0.3784 - acc: 0.8608 - val_loss: 0.4893 - val_acc: 0.8369
+Epoch 5/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.3314 - acc: 0.8827 - val_loss: 0.5253 - val_acc: 0.8715
+Epoch 6/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.2256 - acc: 0.9314 - val_loss: 0.6107 - val_acc: 0.8386
+Epoch 7/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.2513 - acc: 0.9205 - val_loss: 0.5466 - val_acc: 0.8369
+Epoch 8/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.1707 - acc: 0.9533 - val_loss: 0.6643 - val_acc: 0.8386
+Epoch 9/20
+1006/1006 [==============================] - 153s 152ms/sample - loss: 0.1762 - acc: 0.9463 - val_loss: 0.7890 - val_acc: 0.8517
+Epoch 00009: early stopping
+607/607 [==============================] - 22s 36ms/sample - loss: 0.7890 - acc: 0.8517
+Test loss: 0.7889837118899803
+Test accuracy: 0.8517298
+607/607 [==============================] - 23s 37ms/sample
+              precision    recall  f1-score   support
+
+           0       0.83      1.00      0.91       150
+           1       0.85      0.85      0.85       150
+           2       0.97      0.71      0.82       157
+           3       0.80      0.85      0.82       150
+
+    accuracy                           0.85       607
+   macro avg       0.86      0.85      0.85       607
+weighted avg       0.86      0.85      0.85       607
+
+
+
+3-conv-128-nodes-2-dense-1585593044
+Train on 1006 samples, validate on 607 samples
+Epoch 1/20
+1006/1006 [==============================] - 174s 173ms/sample - loss: 6.6412 - acc: 0.3569 - val_loss: 1.0385 - val_acc: 0.5815
+Epoch 2/20
+1006/1006 [==============================] - 173s 172ms/sample - loss: 1.0399 - acc: 0.5358 - val_loss: 0.8326 - val_acc: 0.6870
+Epoch 3/20
+1006/1006 [==============================] - 173s 171ms/sample - loss: 0.8949 - acc: 0.6551 - val_loss: 0.7645 - val_acc: 0.7611
+Epoch 4/20
+1006/1006 [==============================] - 172s 171ms/sample - loss: 0.7399 - acc: 0.7386 - val_loss: 0.6644 - val_acc: 0.7743
+Epoch 5/20
+1006/1006 [==============================] - 172s 171ms/sample - loss: 0.6166 - acc: 0.7525 - val_loss: 0.6543 - val_acc: 0.7891
+Epoch 6/20
+1006/1006 [==============================] - 172s 171ms/sample - loss: 0.5109 - acc: 0.8111 - val_loss: 0.5427 - val_acc: 0.8270
+Epoch 7/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 0.4164 - acc: 0.8559 - val_loss: 0.5121 - val_acc: 0.8748
+Epoch 8/20
+1006/1006 [==============================] - 173s 172ms/sample - loss: 0.3328 - acc: 0.8857 - val_loss: 0.6498 - val_acc: 0.8303
+Epoch 9/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 0.3095 - acc: 0.8946 - val_loss: 0.4829 - val_acc: 0.8797
+Epoch 10/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 0.2782 - acc: 0.8897 - val_loss: 0.5153 - val_acc: 0.8764
+Epoch 11/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 0.2182 - acc: 0.9324 - val_loss: 0.6553 - val_acc: 0.8863
+Epoch 12/20
+1006/1006 [==============================] - 170s 169ms/sample - loss: 0.2111 - acc: 0.9284 - val_loss: 0.6962 - val_acc: 0.8386
+Epoch 13/20
+1006/1006 [==============================] - 171s 170ms/sample - loss: 0.1882 - acc: 0.9414 - val_loss: 0.4900 - val_acc: 0.8929
+Epoch 14/20
+1006/1006 [==============================] - 172s 171ms/sample - loss: 0.1951 - acc: 0.9314 - val_loss: 0.6430 - val_acc: 0.8550
+Epoch 00014: early stopping
+607/607 [==============================] - 24s 40ms/sample - loss: 0.6430 - acc: 0.8550
+Test loss: 0.6430170771710366
+Test accuracy: 0.8550247
+607/607 [==============================] - 25s 41ms/sample
+              precision    recall  f1-score   support
+
+           0       0.87      0.95      0.91       150
+           1       0.73      0.87      0.80       150
+           2       0.98      0.76      0.86       157
+           3       0.88      0.84      0.86       150
+
+    accuracy                           0.86       607
+   macro avg       0.87      0.86      0.86       607
+weighted avg       0.87      0.86      0.86       607
+
+
+
+
+
+     
+
+%load_ext tensorboard
+%tensorboard --logdir logs
+     
+The tensorboard extension is already loaded. To reload it, use:
+  %reload_ext tensorboard
+Reusing TensorBoard on port 6006 (pid 6970), started 0:00:07 ago. (Use '!kill 6970' to kill it.)
+
+try:
+  # %tensorflow_version only exists in Colab.
+  %tensorflow_version 2.x
+except Exception:
+  pass
+
+# Load the TensorBoard notebook extension
+%load_ext tensorboard
+     
+TensorFlow is already loaded. Please restart the runtime to change versions.
+The tensorboard extension is already loaded. To reload it, use:
+  %reload_ext tensorboard
+
+%tensorboard --logdir logs
+     
+
+%reload_ext tensorboard
+     
+
+from tensorboard import notebook
+notebook.list() # View open TensorBoard instances
+
+notebook.display(port=6006, height=1000)
+     
+Known TensorBoard instances:
+  - port 6006: logdir logs (started 0:05:41 ago; pid 6814)
+Selecting TensorBoard with logdir logs (started 0:05:41 ago; port 6006, pid 6814).
+
+!kill 6814
+     
+
+try:
+  # %tensorflow_version only exists in Colab.
+  %tensorflow_version 2.x
+except Exception:
+  pass
+
+# Load the TensorBoard notebook extension
+%load_ext tensorboard
+     
+
+from tensorboard import notebook
+notebook.list() # View open TensorBoard instances
+
+notebook.display(port=6006, height=1000)
+     
+No known TensorBoard instances running.
+
