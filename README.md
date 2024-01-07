@@ -47,14 +47,14 @@ Results
 The results, including accuracy, loss, and classification reports, are printed during and after training. The best-performing models are saved.
 Handwritten Digit Recognition using Deep Learning with PyTorch on MNIST - README
 Overview
-This project focuses on implementing Handwritten Digit Recognition using Deep Learning with PyTorch on the MNIST dataset. The goal is to leverage the power of deep neural networks to accurately classify and recognize handwritten digits.
+#This project focuses on implementing Handwritten Digit Recognition using Deep Learning with PyTorch on the MNIST dataset. The goal is to leverage the power of deep neural networks to accurately classify and recognize handwritten digits.
 
 Key Features:
 Utilizes PyTorch for deep learning implementation.
 Trains on the MNIST dataset, a widely used benchmark in digit recognition.
 Enhances understanding of deep learning concepts and model development.
 Pizza Sales using MySQL - README
-This project centers around analyzing Pizza Sales using MySQL, providing insights into sales patterns, customer preferences, and more.
+#This project centers around analyzing Pizza Sales using MySQL, providing insights into sales patterns, customer preferences, and more.
 
 Key Features:
 Utilizes MySQL for database management and querying.
