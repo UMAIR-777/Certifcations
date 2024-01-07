@@ -1,4 +1,54 @@
 
+Certainly! Below is a basic README file for your TensorFlow model:
+
+markdown
+Copy code
+# Convolutional Neural Network (CNN) for Image Classification
+
+## Overview
+
+This project implements a Convolutional Neural Network (CNN) using TensorFlow and Keras for image classification. The goal is to classify images into different categories based on the presence of pituitary tumors. The model architecture and hyperparameters are explored using a grid search.
+
+## Libraries Used
+
+- TensorFlow 1.15.2
+- Keras
+- NumPy
+- Scikit-learn
+
+## Setup
+
+### Install Dependencies
+
+```bash
+pip install tensorflow numpy scikit-learn
+Dataset
+The dataset is assumed to be in the form of pickled files:
+
+X_train.pickle: Training images
+Y_train.pickle: Training labels
+X_test.pickle: Testing images
+Y_test.pickle: Testing labels
+Model Architecture Exploration
+The code explores different combinations of hyperparameters for the CNN model, including the number of convolutional layers, nodes per layer, and dense layers. The results are printed, and the best-performing models are saved.
+
+Hyperparameters Explored
+Convolutional Layers: [1, 2, 3]
+Nodes per Convolutional Layer: [32, 64, 128]
+Dense Layers: [0, 1, 2]
+Running the Code
+Upload your dataset pickle files (X_train.pickle, Y_train.pickle, X_test.pickle, Y_test.pickle) to the same directory as the code.
+
+Execute the notebook/script.
+
+Model Training and Evaluation
+The code trains the CNN models with different hyperparameters and evaluates their performance on the test set. The models are saved with a unique identifier based on the hyperparameters and accuracy.
+
+TensorBoard and Early Stopping
+TensorBoard is utilized for visualizing the training process. Early stopping is implemented to prevent overfitting.
+
+Results
+The results, including accuracy, loss, and classification reports, are printed during and after training. The best-performing models are saved.
 Handwritten Digit Recognition using Deep Learning with PyTorch on MNIST - README
 Overview
 This project focuses on implementing Handwritten Digit Recognition using Deep Learning with PyTorch on the MNIST dataset. The goal is to leverage the power of deep neural networks to accurately classify and recognize handwritten digits.
